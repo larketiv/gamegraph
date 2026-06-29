@@ -14,10 +14,13 @@
 
   const keyModal = $("#keyModal");
   const keyInput = $("#keyInput");
+  const clearBtn = $("#clearBtn");
 
   // selected games: id -> { id, name, image, released }
   const selected = new Map();
   let searchTimer = null;
+  let lastGraph = null; // { liked: [...detailed games], recs: [...] } of the last build
+  const STATE_KEY = "gg_state_v1"; // localStorage slot for saved games + graph
 
   /* ---------- API key modal ---------- */
   function openKeyModal() {
@@ -104,11 +107,13 @@
     searchEl.value = "";
     hideSuggestions();
     renderChips();
+    persistState();
   }
 
   function removeGame(id) {
     selected.delete(id);
     renderChips();
+    persistState();
   }
 
   function renderChips() {
@@ -121,6 +126,11 @@
       chipsEl.appendChild(chip);
     }
     buildBtn.disabled = selected.size < 1;
+    updateClearBtn();
+  }
+
+  function updateClearBtn() {
+    clearBtn.hidden = selected.size === 0 && !lastGraph;
   }
 
   /* ---------- Build the graph ---------- */
@@ -141,6 +151,10 @@
       overlayEl.hidden = true;
       GameGraphView.render(graphEl, liked, recommendations, focusRec);
       renderRecs(recommendations);
+
+      lastGraph = { liked, recs: recommendations };
+      persistState();
+      updateClearBtn();
     } catch (err) {
       handleApiError(err);
     } finally {
@@ -212,8 +226,63 @@
     );
   }
 
+  /* ---------- Local persistence ---------- */
+  // Saves the selected games and the last built graph to localStorage so a
+  // reload restores everything without hitting the API again.
+  function persistState() {
+    try {
+      localStorage.setItem(
+        STATE_KEY,
+        JSON.stringify({ selected: [...selected.values()], graph: lastGraph })
+      );
+    } catch (e) {
+      /* storage disabled or full — saving is best-effort */
+    }
+  }
+
+  function restoreState() {
+    let data;
+    try {
+      data = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
+    } catch (e) {
+      data = null;
+    }
+    if (!data) return;
+
+    if (Array.isArray(data.selected)) {
+      for (const g of data.selected) selected.set(g.id, g);
+      renderChips();
+    }
+    if (data.graph && data.graph.liked && data.graph.recs) {
+      lastGraph = data.graph;
+      overlayEl.hidden = true;
+      GameGraphView.render(graphEl, lastGraph.liked, lastGraph.recs, focusRec);
+      renderRecs(lastGraph.recs);
+    }
+    updateClearBtn();
+  }
+
+  function clearAll() {
+    selected.clear();
+    lastGraph = null;
+    try {
+      localStorage.removeItem(STATE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    renderChips();
+    recsEl.innerHTML =
+      '<p class="empty">Your recommendations will appear here once you build a graph.</p>';
+    GameGraphView.clear();
+    overlayEl.hidden = false;
+    updateClearBtn();
+  }
+
+  clearBtn.addEventListener("click", clearAll);
+
   window.addEventListener("resize", () => GameGraphView.resize(graphEl));
 
-  // Prompt for a key on first visit if none is configured.
+  // Restore any saved graph, then prompt for a key on first visit if needed.
+  restoreState();
   if (!RAWG.hasKey()) openKeyModal();
 })();

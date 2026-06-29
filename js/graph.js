@@ -175,5 +175,12 @@ const GameGraphView = (() => {
     if (Graph) Graph.width(el.clientWidth).height(el.clientHeight);
   }
 
-  return { render, resize, COLORS };
+  function clear() {
+    hoverNode = null;
+    highlightNodes = new Set();
+    highlightLinks = new Set();
+    if (Graph) Graph.graphData({ nodes: [], links: [] });
+  }
+
+  return { render, resize, clear, COLORS };
 })();
