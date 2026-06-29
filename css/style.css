@@ -126,6 +126,28 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 }
 .text-btn:hover { color: var(--gold); }
 
+/* Adventure slider */
+.adventure { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.adventure > label { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+.adventure input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+  border-radius: 999px; background: var(--bg-elev-2); outline: none; cursor: pointer;
+}
+.adventure input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--green); border: 2px solid var(--bg-elev);
+  box-shadow: 0 0 6px var(--green);
+}
+.adventure input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%; background: var(--green);
+  border: 2px solid var(--bg-elev);
+}
+.adventure-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); }
+
+/* "Because you liked …" line on rec cards */
+.rec-because { font-size: 11px; color: var(--text-dim); margin-bottom: 5px; line-height: 1.4; }
+.rec-because strong { color: var(--text); font-weight: 600; }
+
 /* ---------- Recommendations ---------- */
 .recs-panel { flex: 1 1 auto; min-height: 0; }
 .recs { display: flex; flex-direction: column; gap: 10px; }

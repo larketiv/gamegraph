@@ -15,12 +15,20 @@
   const keyModal = $("#keyModal");
   const keyInput = $("#keyInput");
   const clearBtn = $("#clearBtn");
+  const adventureEl = $("#adventure");
 
   // selected games: id -> { id, name, image, released }
   const selected = new Map();
   let searchTimer = null;
   let lastGraph = null; // { liked: [...detailed games], recs: [...] } of the last build
+  let lastLiked = null; // detailed liked games of the last build (for reselect)
+  let lastScored = null; // scored candidate pool of the last build (for reselect)
   const STATE_KEY = "gg_state_v1"; // localStorage slot for saved games + graph
+  const ADVENTURE_KEY = "gg_adventure_v1";
+
+  function getAdventure() {
+    return adventureEl ? parseFloat(adventureEl.value) : 0.35;
+  }
 
   /* ---------- API key modal ---------- */
   function openKeyModal() {
@@ -146,11 +154,13 @@
       const liked = await Promise.all(
         [...selected.keys()].map((id) => RAWG.details(id))
       );
-      const { recommendations } = await Recommender.recommend(liked);
+      const { recommendations, scored } = await Recommender.recommend(liked, {
+        adventure: getAdventure()
+      });
 
-      overlayEl.hidden = true;
-      GameGraphView.render(graphEl, liked, recommendations, focusRec);
-      renderRecs(recommendations);
+      lastLiked = liked;
+      lastScored = scored; // kept in memory so the slider can reselect instantly
+      renderGraph(liked, recommendations);
 
       lastGraph = { liked, recs: recommendations };
       persistState();
@@ -166,6 +176,33 @@
     loadingEl.hidden = !on;
     buildBtn.disabled = on || selected.size < 1;
     buildBtn.textContent = on ? "Building…" : "Build my graph";
+  }
+
+  // Render (or re-render) the graph + recommendation list for a built result.
+  function renderGraph(liked, recommendations) {
+    overlayEl.hidden = true;
+    GameGraphView.render(graphEl, liked, recommendations, focusRec);
+    renderRecs(recommendations);
+  }
+
+  // Adventure slider: re-rank the existing candidate pool instantly (no API).
+  // After a reload there's no in-memory pool, so it just applies on next Build.
+  if (adventureEl) {
+    adventureEl.addEventListener("change", () => {
+      try {
+        localStorage.setItem(ADVENTURE_KEY, adventureEl.value);
+      } catch (e) {
+        /* ignore */
+      }
+      if (lastScored && lastLiked) {
+        const recommendations = Recommender.reselect(lastScored, lastLiked, {
+          adventure: getAdventure()
+        });
+        renderGraph(lastLiked, recommendations);
+        lastGraph = { liked: lastLiked, recs: recommendations };
+        persistState();
+      }
+    });
   }
 
   /* ---------- Recommendations list ---------- */
@@ -184,11 +221,22 @@
         .slice(0, 4)
         .map((t) => `<span class="tag">${escapeHtml(t.name)}</span>`)
         .join("");
+      const because =
+        g.because && g.because.game
+          ? `<div class="rec-because">Because you liked <strong>${escapeHtml(
+              g.because.game
+            )}</strong>${
+              g.because.tags.length
+                ? ` · ${g.because.tags.map(escapeHtml).join(", ")}`
+                : ""
+            }</div>`
+          : "";
       card.innerHTML = `
         <span class="rec-thumb" style="background-image:url('${g.image || ""}')"></span>
         <div class="rec-body">
           <h3>${escapeHtml(g.name)} ${year ? `<span class="year">${year}</span>` : ""}</h3>
           <div class="rec-tags">${shared}</div>
+          ${because}
           <div class="rec-meta">★ ${g.rating || "–"} · match ${g.overlap} tag${g.overlap === 1 ? "" : "s"}</div>
         </div>
         <a class="rec-link" href="https://rawg.io/games/${g.id}" target="_blank" rel="noopener" title="View on RAWG">↗</a>`;
@@ -265,6 +313,8 @@
   function clearAll() {
     selected.clear();
     lastGraph = null;
+    lastLiked = null;
+    lastScored = null;
     try {
       localStorage.removeItem(STATE_KEY);
     } catch (e) {
@@ -282,7 +332,14 @@
 
   window.addEventListener("resize", () => GameGraphView.resize(graphEl));
 
-  // Restore any saved graph, then prompt for a key on first visit if needed.
+  // Restore the saved adventure setting and any saved graph, then prompt for a
+  // key on first visit if needed.
+  try {
+    const a = localStorage.getItem(ADVENTURE_KEY);
+    if (a !== null && adventureEl) adventureEl.value = a;
+  } catch (e) {
+    /* ignore */
+  }
   restoreState();
   if (!RAWG.hasKey()) openKeyModal();
 })();

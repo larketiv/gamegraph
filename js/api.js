@@ -4,6 +4,29 @@ const RAWG = (() => {
   const BASE = "https://api.rawg.io/api";
   const KEY_STORAGE = "gg_rawg_key";
 
+  // Cache full game details in localStorage so reranking and repeat builds
+  // don't re-hit RAWG. Keyed by app id; entries expire after a week.
+  const DETAIL_CACHE_KEY = "gg_details_v1";
+  const DETAIL_TTL = 7 * 24 * 60 * 60 * 1000;
+  let detailMem = null;
+  function detailCache() {
+    if (detailMem) return detailMem;
+    try {
+      detailMem = JSON.parse(localStorage.getItem(DETAIL_CACHE_KEY) || "{}");
+    } catch (e) {
+      detailMem = {};
+    }
+    return detailMem;
+  }
+  function saveDetailCache() {
+    try {
+      localStorage.setItem(DETAIL_CACHE_KEY, JSON.stringify(detailMem));
+    } catch (e) {
+      /* storage full — drop the cache rather than crash */
+      detailMem = {};
+    }
+  }
+
   function getKey() {
     const local = localStorage.getItem(KEY_STORAGE);
     if (local) return local;
@@ -109,37 +132,49 @@ const RAWG = (() => {
       }));
     },
 
-    // Full detail for a liked game (gives the ~10 tags we build a profile from).
+    // Full detail for a game (full tags + the fields the scorer needs).
+    // Cached in localStorage.
     async details(id) {
+      const cache = detailCache();
+      const hit = cache[id];
+      if (hit && Date.now() - hit.t < DETAIL_TTL) return hit.v;
+
       const g = await request(`/games/${id}`);
-      return {
+      const v = {
         id: g.id,
         name: g.name,
         released: g.released,
         image: g.background_image,
         rating: g.rating,
+        ratings_count: g.ratings_count,
+        metacritic: g.metacritic,
+        developers: (g.developers || []).map((d) => d.slug || d.name),
         genres: (g.genres || []).map((x) => ({ slug: x.slug, name: x.name })),
         tags: cleanTags(g.tags, 12)
       };
+      cache[id] = { t: Date.now(), v };
+      saveDetailCache();
+      return v;
     },
 
-    // Candidate pool for recommendations, filtered by a set of tag slugs.
-    async byTags(slugs, { exclude = [], pageSize = 40 } = {}) {
+    // Candidate games carrying a single tag. We query one tag at a time and let
+    // the recommender union the results (predictable recall, no AND/OR guessing).
+    async gamesByTag(slug, { ordering = "-rating", pageSize = 30 } = {}) {
       const data = await request("/games", {
-        tags: slugs.join(","),
-        ordering: "-added",
-        page_size: pageSize,
-        exclude_additions: true
+        tags: slug,
+        ordering,
+        page_size: pageSize
       });
-      const excludeSet = new Set(exclude);
       return (data.results || [])
-        .filter((g) => !excludeSet.has(g.id) && g.background_image)
+        .filter((g) => g.background_image)
         .map((g) => ({
           id: g.id,
           name: g.name,
           released: g.released,
           image: g.background_image,
           rating: g.rating,
+          ratings_count: g.ratings_count,
+          metacritic: g.metacritic,
           genres: (g.genres || []).map((x) => ({ slug: x.slug, name: x.name })),
           tags: cleanTags(g.tags, 10)
         }));
