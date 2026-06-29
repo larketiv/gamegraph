@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameGraph — find your next game</title>
+  <meta name="description" content="Add games you love and watch a living graph of shared tags pull in your next favorites." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <h1>Game<span>Graph</span></h1>
+    </div>
+    <button id="settingsBtn" class="ghost-btn" title="API key settings">⚙</button>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: input + recommendations -->
+    <aside class="sidebar">
+      <section class="panel">
+        <label class="field-label">Add games you love</label>
+        <div class="search-wrap">
+          <input id="search" type="text" autocomplete="off" placeholder="Search a game…" />
+          <div id="suggestions" class="suggestions" hidden></div>
+        </div>
+
+        <div id="chips" class="chips"></div>
+
+        <button id="buildBtn" class="primary-btn" disabled>Build my graph</button>
+        <p class="hint">Add 2–6 games for the best recommendations.</p>
+      </section>
+
+      <section class="panel recs-panel">
+        <h2 class="panel-title">Recommended for you</h2>
+        <div id="recs" class="recs">
+          <p class="empty">Your recommendations will appear here once you build a graph.</p>
+        </div>
+      </section>
+    </aside>
+
+    <!-- RIGHT: graph -->
+    <section class="graph-area">
+      <div id="graph" class="graph"></div>
+      <div id="graphOverlay" class="graph-overlay">
+        <div class="overlay-card">
+          <h3>An Obsidian-style web for games</h3>
+          <p>Add a few games on the left and hit <strong>Build my graph</strong>. Shared tags become hubs that pull related games — your recommendations — into the same cluster.</p>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="dot liked"></i> Games you love</span>
+        <span><i class="dot tag"></i> Shared tag</span>
+        <span><i class="dot rec"></i> Recommended</span>
+      </div>
+      <div id="loading" class="loading" hidden><span class="spinner"></span> Building your graph…</div>
+    </section>
+  </main>
+
+  <!-- API key modal -->
+  <div id="keyModal" class="modal" hidden>
+    <div class="modal-card">
+      <h3>Connect to RAWG</h3>
+      <p>GameGraph uses the free <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">RAWG.io API</a> for live game data. Paste your API key — it's stored only in your browser (localStorage).</p>
+      <input id="keyInput" type="text" placeholder="Your RAWG API key" />
+      <div class="modal-actions">
+        <button id="keyCancel" class="ghost-btn">Cancel</button>
+        <button id="keySave" class="primary-btn">Save key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- force-graph (canvas-based, Obsidian-like) -->
+  <script src="https://unpkg.com/force-graph@1.43.5/dist/force-graph.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/recommend.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
