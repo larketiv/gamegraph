@@ -206,10 +206,18 @@
   }
 
   /* ---------- Recommendations list ---------- */
+  const RECS_EMPTY_HTML = `
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3 14.2 9.2 20.5 9.5 15.6 13.5 17.3 19.7 12 16 6.7 19.7 8.4 13.5 3.5 9.5 9.8 9.2Z" />
+      </svg>
+      <p>Build a graph and your matches land here, ranked by how closely they share your gameplay tags.</p>
+    </div>`;
+
   function renderRecs(recs) {
     recsEl.innerHTML = "";
     if (!recs.length) {
-      recsEl.innerHTML = `<p class="empty">No strong matches found — try adding another game or two.</p>`;
+      recsEl.innerHTML = `<div class="empty"><p>No strong matches yet. Add another game or two, then rebuild.</p></div>`;
       return;
     }
     for (const g of recs) {
@@ -237,9 +245,11 @@
           <h3>${escapeHtml(g.name)} ${year ? `<span class="year">${year}</span>` : ""}</h3>
           <div class="rec-tags">${shared}</div>
           ${because}
-          <div class="rec-meta">★ ${g.rating || "–"} · match ${g.overlap} tag${g.overlap === 1 ? "" : "s"}</div>
+          <div class="rec-meta">★ ${g.rating || "n/a"} · match ${g.overlap} tag${g.overlap === 1 ? "" : "s"}</div>
         </div>
-        <a class="rec-link" href="https://rawg.io/games/${g.id}" target="_blank" rel="noopener" title="View on RAWG">↗</a>`;
+        <a class="rec-link" href="https://rawg.io/games/${g.id}" target="_blank" rel="noopener" title="View on RAWG" aria-label="View on RAWG">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+        </a>`;
       recsEl.appendChild(card);
     }
   }
@@ -321,8 +331,7 @@
       /* ignore */
     }
     renderChips();
-    recsEl.innerHTML =
-      '<p class="empty">Your recommendations will appear here once you build a graph.</p>';
+    recsEl.innerHTML = RECS_EMPTY_HTML;
     GameGraphView.clear();
     overlayEl.hidden = false;
     updateClearBtn();

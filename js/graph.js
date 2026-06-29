@@ -1,9 +1,9 @@
 // Builds the force-graph data and renders the Obsidian-style network.
 const GameGraphView = (() => {
   const COLORS = {
-    liked: "#ffd166", // warm gold — your games
-    tag: "#5b8def", // blue — shared tags (hubs)
-    rec: "#06d6a0" // green — recommendations
+    liked: "#f2b340", // amber: your games
+    tag: "#7d97ff", // periwinkle: shared tags (hubs)
+    rec: "#34e0a1" // spring green: recommendations
   };
 
   let Graph = null;
@@ -96,7 +96,7 @@ const GameGraphView = (() => {
 
     Graph.width(el.clientWidth)
       .height(el.clientHeight)
-      .backgroundColor("#0d1017")
+      .backgroundColor("#0a0c12")
       .graphData(data)
       .nodeId("id")
       .nodeRelSize(4)
@@ -147,7 +147,7 @@ const GameGraphView = (() => {
           ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.fillStyle = dim ? "rgba(230,235,245,0.25)" : "#e6ebf5";
+          ctx.fillStyle = dim ? "rgba(232,237,246,0.25)" : "#e8edf6";
           ctx.fillText(node.name, node.x, node.y + r + 1.5);
         }
         ctx.globalAlpha = 1;

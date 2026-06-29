@@ -3,36 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GameGraph — find your next game</title>
-  <meta name="description" content="Add games you love and watch a living graph of shared tags pull in your next favorites." />
+  <title>GameGraph - find your next game</title>
+  <meta name="description" content="Add games you love and watch a living graph of shared gameplay tags pull in your next favorites." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="logo-dot"></span>
+      <span class="brand-mark" aria-hidden="true">
+        <!-- simple geometric network glyph -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 8 L17 6 M7 8 L11 17 M17 6 L11 17" stroke-opacity="0.5" />
+          <circle cx="7" cy="8" r="2.4" fill="currentColor" stroke="none" />
+          <circle cx="17" cy="6" r="2" fill="currentColor" stroke="none" />
+          <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
+        </svg>
+      </span>
       <h1>Game<span>Graph</span></h1>
     </div>
-    <button id="settingsBtn" class="ghost-btn" title="API key settings">⚙</button>
+    <button id="settingsBtn" class="icon-btn" title="API key settings" aria-label="API key settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </button>
   </header>
 
   <main class="layout">
     <!-- LEFT: input + recommendations -->
     <aside class="sidebar">
       <section class="panel">
-        <label class="field-label">Add games you love</label>
+        <label class="field-label" for="search">Add games you love</label>
         <div class="search-wrap">
-          <input id="search" type="text" autocomplete="off" placeholder="Search a game…" />
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input id="search" type="text" autocomplete="off" placeholder="Search a game" />
           <div id="suggestions" class="suggestions" hidden></div>
         </div>
 
         <div id="chips" class="chips"></div>
 
         <button id="buildBtn" class="primary-btn" disabled>Build my graph</button>
-        <p class="hint">Add 2–6 games for the best recommendations.</p>
+        <p class="hint">Add 2 to 6 games for the sharpest recommendations.</p>
 
         <div class="adventure">
-          <label for="adventure">Adventurousness</label>
+          <div class="adventure-head">
+            <label for="adventure">Adventurousness</label>
+          </div>
           <input id="adventure" type="range" min="0" max="1" step="0.05" value="0.35" />
           <div class="adventure-scale"><span>Safe picks</span><span>Adventurous</span></div>
         </div>
@@ -43,7 +67,12 @@
       <section class="panel recs-panel">
         <h2 class="panel-title">Recommended for you</h2>
         <div id="recs" class="recs">
-          <p class="empty">Your recommendations will appear here once you build a graph.</p>
+          <div class="empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3 14.2 9.2 20.5 9.5 15.6 13.5 17.3 19.7 12 16 6.7 19.7 8.4 13.5 3.5 9.5 9.8 9.2Z" />
+            </svg>
+            <p>Build a graph and your matches land here, ranked by how closely they share your gameplay tags.</p>
+          </div>
         </div>
       </section>
     </aside>
@@ -53,8 +82,8 @@
       <div id="graph" class="graph"></div>
       <div id="graphOverlay" class="graph-overlay">
         <div class="overlay-card">
-          <h3>An Obsidian-style web for games</h3>
-          <p>Add a few games on the left and hit <strong>Build my graph</strong>. Shared tags become hubs that pull related games — your recommendations — into the same cluster.</p>
+          <h3>Map your taste in games</h3>
+          <p>Add a few games you love, then build the graph. Shared gameplay tags become hubs, and the titles clustering around them are your recommendations.</p>
         </div>
       </div>
       <div class="legend">
@@ -62,7 +91,7 @@
         <span><i class="dot tag"></i> Shared tag</span>
         <span><i class="dot rec"></i> Recommended</span>
       </div>
-      <div id="loading" class="loading" hidden><span class="spinner"></span> Building your graph…</div>
+      <div id="loading" class="loading" hidden><span class="spinner"></span> Building your graph</div>
     </section>
   </main>
 
@@ -70,7 +99,7 @@
   <div id="keyModal" class="modal" hidden>
     <div class="modal-card">
       <h3>Connect to RAWG</h3>
-      <p>GameGraph uses the free <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">RAWG.io API</a> for live game data. Paste your API key — it's stored only in your browser (localStorage).</p>
+      <p>GameGraph pulls live game data from the free <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">RAWG.io API</a>. Paste your API key below. It is stored only in your browser, in localStorage.</p>
       <input id="keyInput" type="text" placeholder="Your RAWG API key" />
       <div class="modal-actions">
         <button id="keyCancel" class="ghost-btn">Cancel</button>
@@ -79,7 +108,7 @@
     </div>
   </div>
 
-  <!-- force-graph (canvas-based, Obsidian-like) -->
+  <!-- force-graph (canvas-based) -->
   <script src="https://unpkg.com/force-graph@1.43.5/dist/force-graph.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
