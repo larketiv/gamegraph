@@ -32,11 +32,53 @@ const RAWG = (() => {
     return res.json();
   }
 
-  // Keep only meaningful English tags, capped, in RAWG's relevance order.
+  // RAWG tags are user-generated and noisy. We only want tags that describe how
+  // a game PLAYS (Open World, Sandbox, Roguelike, Crafting…) — not store/engine
+  // features, input methods, camera perspective, player count, or pure vibe.
+  // These two lists drop that noise. Edit them to taste.
+  //
+  // Substring match: drop a tag if its slug CONTAINS any of these fragments.
+  // (Fragments are chosen to be distinctive so they don't catch gameplay tags —
+  // e.g. "steam-" with the hyphen avoids nuking "steampunk".)
+  const STOP_SUBSTRINGS = [
+    "controller", "steam-", "split-screen", "co-op", "multiplayer",
+    "achievements", "captions", "subtitle", "remote-play", "in-app",
+    "leaderboard", "trading-card", "anti-cheat", "workshop", "cross-platform"
+  ];
+  // Exact match: drop a tag if its slug equals one of these.
+  const STOP_EXACT = new Set([
+    // camera / perspective / dimension (kept narrow so "third-person-shooter" survives)
+    "first-person", "third-person", "top-down", "isometric", "side-scroller",
+    "2d", "3d", "2-5d", "vr", "vr-only", "vr-supported",
+    // player-count structure
+    "singleplayer", "pvp", "pve", "mmo", "massively-multiplayer",
+    // storefront / engine / status
+    "early-access", "free-to-play", "demo", "e-sports", "kickstarter",
+    "cloud-saves", "downloadable-content", "stats", "soundtrack",
+    "includes-soundtrack", "includes-level-editor", "level-editor",
+    "valve-anti-cheat-enabled", "exclusive",
+    // mood / aesthetic (not a mechanic)
+    "atmospheric", "great-soundtrack", "funny", "cute", "colorful",
+    "relaxing", "beautiful", "masterpiece", "classic", "memes", "cinematic",
+    "stylized", "epic", "addictive",
+    // content descriptors
+    "gore", "blood", "violent", "nudity", "sexual-content", "mature",
+    "nsfw", "partial-nudity"
+  ]);
+
+  function isGameplayTag(slug) {
+    if (STOP_EXACT.has(slug)) return false;
+    return !STOP_SUBSTRINGS.some((frag) => slug.includes(frag));
+  }
+
+  // Keep meaningful English GAMEPLAY tags, in RAWG's relevance order, then cap.
+  // We filter noise BEFORE slicing so we keep up to `limit` real gameplay tags
+  // instead of mostly store/engine flags (which RAWG often ranks at the top).
   function cleanTags(tags = [], limit = 12) {
     return tags
       .filter((t) => !t.language || t.language === "eng")
       .filter((t) => t.slug && t.name)
+      .filter((t) => isGameplayTag(t.slug))
       .slice(0, limit)
       .map((t) => ({
         slug: t.slug,
